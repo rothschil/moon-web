@@ -24,6 +24,29 @@
     </foreach>
   </insert>
 
+  <select id="getList" resultMap="BaseResultMap" parameterType="io.github.rothschil.domain.entity.FileInfo" >
+    select
+    <include refid="Base_Column_List" />
+    from tb_file_info
+    <where>
+      <if test="fileName != null" >
+        and file_name = #{fileName,jdbcType=VARCHAR}
+      </if>
+      <if test="filePath != null" >
+        and file_path = #{filePath,jdbcType=VARCHAR}
+      </if>
+      <if test="fileSize != null" >
+        and file_size = #{fileSize,jdbcType=BIGINT}
+      </if>
+      <if test="suffixName != null" >
+        and suffix_name = #{suffixName,jdbcType=VARCHAR}
+      </if>
+      <if test="md5 != null" >
+        and md5 = #{md5,jdbcType=VARCHAR},
+      </if>
+    </where>
+  </select>
+
   <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
     select 
     <include refid="Base_Column_List" />
