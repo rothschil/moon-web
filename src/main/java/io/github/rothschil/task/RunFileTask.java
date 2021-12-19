@@ -7,7 +7,7 @@ import io.github.rothschil.domain.entity.FileInfo;
 import io.github.rothschil.domain.service.FileInfoService;
 import io.github.rothschil.hadler.impl.FileInfoHandler;
 import io.github.rothschil.queue.FileInfoQueue;
-import io.github.rothschil.thread.FileSizeThread;
+import io.github.rothschil.thread.FileMd5Thread;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -33,36 +33,52 @@ public class RunFileTask {
 
     private ThreadPoolExecutor executor = ThreadPoolsUtil.doCreate(3,5,THREAD_NAME);
 
-    public void run(String path){
-        File file = new File(path);
-        if(!file.isDirectory()){
+
+    /**
+     * @author <a href="https://github.com/rothschil">Sam</a>
+     * @date 2021/12/19-9:51
+     * @param targetFile  目标文件
+     **/
+    public void run(File targetFile){
+        if(!targetFile.isDirectory()){
             return;
         }
-        listFiles(file);
+        listFiles(targetFile);
     }
 
-    public void listFiles(File file){
+    /**
+     * @author <a href="https://github.com/rothschil">Sam</a>
+     * @date 2021/12/19-9:51
+     * @param targetFilePath  目标文件路径
+     **/
+    public void run(String targetFilePath){
+        File file = new File(targetFilePath);
+        run(file);
+    }
+
+    protected void listFiles(File file){
         File[] files = file.listFiles();
-        List<FileInfo> lists = new ArrayList<>();
-        if(files.length==0){
+        int fileLength = files.length;
+        if(0==fileLength){
             return;
         }
-        for (File fl : files) {
-            if(fl.isDirectory()){
-                listFiles(fl);
+        List<FileInfo> lists = new ArrayList<>(fileLength);
+        for (File elmFile : files) {
+            if(elmFile.isDirectory()){
+                listFiles(elmFile);
                 continue;
             }
-            String suffixName = FileUtil.getSuffix(fl);
+            String suffixName = FileUtil.getSuffix(elmFile);
             if(!ImageConst.LIST_SUFFIX.contains(suffixName.toUpperCase())){
                 continue;
             }
-            Future<String> result = executor.submit(new FileSizeThread(fl));
-            String fileName = FileUtil.getName(fl);
-            long size = fl.length();
-            String filePath = FileUtil.getAbsolutePath(fl);
+            Future<String> md5Future = executor.submit(new FileMd5Thread(elmFile));
+            String fileName = FileUtil.getName(elmFile);
+            long size = elmFile.length();
+            String filePath = FileUtil.getAbsolutePath(elmFile);
             try {
                 FileInfo fileInfo = FileInfo.builder().fileName(fileName).filePath(filePath).fileSize(size).suffixName(suffixName)
-                        .md5(result.get()).build();
+                        .md5(md5Future.get()).build();
                 lists.add(fileInfo);
             } catch (InterruptedException | ExecutionException e){
                 e.printStackTrace();
@@ -72,6 +88,7 @@ public class RunFileTask {
             fileInfoHandler.setLists(lists);
             fileInfoQueue.addQueue(fileInfoHandler);
         }
+        lists.clear();
     }
 
     public FileInfoService fileInfoService;

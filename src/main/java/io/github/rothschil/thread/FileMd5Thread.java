@@ -12,13 +12,13 @@ import java.util.concurrent.Callable;
  * @date 20/12/30 13:16
  * @since  1.0.0
 */
-public class FileSizeThread implements Callable<String> {
+public class FileMd5Thread implements Callable<String> {
 
     private File file;
 
-    public FileSizeThread(){}
+    public FileMd5Thread(){}
 
-    public FileSizeThread(File file){
+    public FileMd5Thread(File file){
         this.file = file;
     }
 

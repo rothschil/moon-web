@@ -25,6 +25,7 @@ public class FileInfoHandler implements IntfFileInfoHandler {
     @Autowired
     private FileInfoService fileInfoService;
 
+    @Override
     public void processData(){
         fileInfoService.insert(lists);
     }
